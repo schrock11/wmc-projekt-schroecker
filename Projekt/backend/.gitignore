@@ -1,0 +1,43 @@
+# ==========================================
+# Node.js / Abhängigkeiten
+# ==========================================
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# ==========================================
+# Kompilierter Code (TypeScript)
+# ==========================================
+# Ignoriert den Ordner mit dem fertig transpilierten JavaScript-Code
+dist/
+build/
+
+# ==========================================
+# Datenbanken
+# ==========================================
+# Ganz wichtig: Deine lokale SQLite-Datenbank nicht pushen!
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# ==========================================
+# Umgebungsvariablen & Secrets
+# ==========================================
+# Falls du später API-Keys oder Passwörter verwendest
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# ==========================================
+# Betriebssystem & IDEs (VS Code, etc.)
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
