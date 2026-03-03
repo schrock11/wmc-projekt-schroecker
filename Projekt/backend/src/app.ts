@@ -44,6 +44,33 @@ app.get('/api/users/:id', (req: Request, res: Response) => {
     });
 });
 
+// ==========================================
+// LOGIN ENDPUNKT
+// ==========================================
+app.post('/api/login', (req: Request, res: Response) => {
+    const { username } = req.body;
+
+    if (!username) {
+        res.status(400).json({ error: 'Username wird benötigt.' });
+        return;
+    }
+
+    db.get(`SELECT id, username FROM Users WHERE username = ?`, [username], (err, row) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        if (!row) {
+            // 401 Unauthorized, wenn der Name nicht in der Datenbank steht
+            res.status(401).json({ error: 'User nicht gefunden. Bitte erst registrieren.' });
+            return;
+        }
+        
+        // User gefunden -> Daten zurückgeben
+        res.json(row);
+    });
+});
+
 
 // ==========================================
 // 2. FRIENDSHIPS ENDPUNKTE
