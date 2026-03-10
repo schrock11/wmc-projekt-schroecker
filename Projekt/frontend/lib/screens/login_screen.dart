@@ -231,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             // LOGIN REQUEST
                             // =======================
                             final url = Uri.parse(
-                              'http://localhost:3000/api/login',
+                              'http://10.0.2.2:3000/api/login',
                             );
                             final response = await http.post(
                               url,

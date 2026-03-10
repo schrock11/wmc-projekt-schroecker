@@ -29,7 +29,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
     try {
       // 1. Freunde laden, um IDs in Namen umzuwandeln
-      final friendsUrl = Uri.parse('http://localhost:3000/api/users/$userId/friends');
+      final friendsUrl = Uri.parse('http://10.0.2.2:3000/api/users/$userId/friends');
       final friendsRes = await http.get(friendsUrl);
       if (friendsRes.statusCode == 200) {
         final List<dynamic> friendsList = json.decode(friendsRes.body);
@@ -39,7 +39,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
       }
 
       // 2. Transaktionen laden
-      final transUrl = Uri.parse('http://localhost:3000/api/users/$userId/transactions');
+      final transUrl = Uri.parse('http://10.0.2.2:3000/api/users/$userId/transactions');
       final transRes = await http.get(transUrl);
       if (transRes.statusCode == 200) {
         setState(() {
@@ -53,7 +53,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Future<void> _settleTransaction(int transactionId) async {
-    final url = Uri.parse('http://localhost:3000/api/transactions/$transactionId/settle');
+    final url = Uri.parse('http://10.0.2.2:3000/api/transactions/$transactionId/settle');
     try {
       final response = await http.patch(url);
       if (response.statusCode == 200) {

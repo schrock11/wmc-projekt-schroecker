@@ -31,7 +31,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final userId = Provider.of<UserProvider>(context, listen: false).userId;
     if (userId == null) return;
 
-    final url = Uri.parse('http://localhost:3000/api/users/$userId/friends');
+    final url = Uri.parse('http://10.0.2.2:3000/api/users/$userId/friends');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -64,7 +64,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final payerId = isIOwe ? selectedFriendId : myId;
     final debtorId = isIOwe ? myId : selectedFriendId;
 
-    final url = Uri.parse('http://localhost:3000/api/transactions');
+    final url = Uri.parse('http://10.0.2.2:3000/api/transactions');
     try {
       final response = await http.post(
         url,

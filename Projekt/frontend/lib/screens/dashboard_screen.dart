@@ -17,10 +17,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double totalCredit = 0.0;
   bool isLoading = true;
 
+  Map<int, String> friendNames = {};
+  List<Map<String, dynamic>> topFriends = [];
+
   @override
   void initState() {
     super.initState();
-    // Lädt die Daten, sobald der Screen startet
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchDashboardData();
     });
@@ -30,47 +32,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final userId = Provider.of<UserProvider>(context, listen: false).userId;
     if (userId == null) return;
 
-    final url = Uri.parse(
-      'http://localhost:3000/api/users/$userId/transactions',
-    );
-
     try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final List<dynamic> transactions = json.decode(response.body);
+      // 1. Freunde laden, um IDs in Namen umzuwandeln
+      final friendsUrl = Uri.parse('http://10.0.2.2:3000/api/users/$userId/friends');
+      final friendsRes = await http.get(friendsUrl);
+      if (friendsRes.statusCode == 200) {
+        final List<dynamic> friendsList = json.decode(friendsRes.body);
+        for (var f in friendsList) {
+          friendNames[f['id']] = f['username'];
+        }
+      }
+
+      // 2. Transaktionen laden
+      final transUrl = Uri.parse('http://10.0.2.2:3000/api/users/$userId/transactions');
+      final transRes = await http.get(transUrl);
+
+      if (transRes.statusCode == 200) {
+        final List<dynamic> transactions = json.decode(transRes.body);
 
         double tempOwed = 0.0;
         double tempCredit = 0.0;
+        Map<int, double> balances = {}; // friendId -> offener Saldo
 
         for (var t in transactions) {
           if (t['is_settled'] == 0) {
-            // Nur offene Rechnungen zählen
+            double amount = (t['amount'] as num).toDouble();
+            int friendId;
+
             if (t['payer_id'] == userId) {
-              // Ich habe gezahlt -> ich bekomme Geld (Credit)
-              tempCredit += t['amount'];
+              tempCredit += amount;
+              friendId = t['debtor_id'];
+              balances[friendId] = (balances[friendId] ?? 0) + amount;
             } else if (t['debtor_id'] == userId) {
-              // Ich bin der Schuldner -> ich schulde Geld (Owed)
-              tempOwed += t['amount'];
+              tempOwed += amount;
+              friendId = t['payer_id'];
+              balances[friendId] = (balances[friendId] ?? 0) - amount;
             }
           }
         }
 
-        setState(() {
-          totalOwed = tempOwed;
-          totalCredit = tempCredit;
-          isLoading = false;
+        // Top Freunde aggregieren
+        List<Map<String, dynamic>> calculatedTopFriends = [];
+        balances.forEach((id, balance) {
+          if (balance != 0) { // Nur eintragen, wenn es offene Schulden gibt
+            calculatedTopFriends.add({
+              'id': id,
+              'name': friendNames[id] ?? 'Buddy ID $id',
+              'balance': balance, // Positiv: Freund schuldet dir, Negativ: Du schuldest dem Freund
+            });
+          }
         });
+
+        // Nach höchstem Betrag (absolut) absteigend sortieren
+        calculatedTopFriends.sort((a, b) => (b['balance'] as double).abs().compareTo((a['balance'] as double).abs()));
+
+        // Auf maximal 3 limitieren
+        if (calculatedTopFriends.length > 3) {
+          calculatedTopFriends = calculatedTopFriends.sublist(0, 3);
+        }
+
+        if (mounted) {
+          setState(() {
+            totalOwed = tempOwed;
+            totalCredit = tempCredit;
+            topFriends = calculatedTopFriends;
+            isLoading = false;
+          });
+        }
       }
     } catch (e) {
       print('Error loading data: $e');
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return '??';
+    List<String> parts = name.split(' ');
+    if (parts.length > 1) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
   }
 
   @override
   Widget build(BuildContext context) {
     final username = Provider.of<UserProvider>(context).username ?? 'User';
     final totalBalance = totalCredit - totalOwed;
+    
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -187,29 +236,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Friends List (Hardcoded Mock-Data vorerst)
+            // Dynamic Top Friends List
             Expanded(
-              child: ListView(
-                children: [
-                  _buildFriendTile(
-                    'SC',
-                    'Sarah Chen',
-                    '489234',
-                    '-\$45.50',
-                    'you owe',
-                    Colors.redAccent,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildFriendTile(
-                    'MJ',
-                    'Marcus Johnson',
-                    '214756',
-                    '+\$23.00',
-                    'owes you',
-                    Colors.greenAccent,
-                  ),
-                ],
-              ),
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : topFriends.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No open balances with friends.',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: topFriends.length,
+                          itemBuilder: (context, index) {
+                            final friend = topFriends[index];
+                            final double balance = friend['balance'];
+                            final bool isIOwe = balance < 0;
+                            final displayAmount = balance.abs();
+                            final initials = _getInitials(friend['name']);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: _buildFriendTile(
+                                initials,
+                                friend['name'],
+                                friend['id'].toString(),
+                                '${isIOwe ? '-' : '+'}\$${displayAmount.toStringAsFixed(2)}',
+                                isIOwe ? 'you owe' : 'owes you',
+                                isIOwe ? Colors.redAccent : Colors.greenAccent,
+                              ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),

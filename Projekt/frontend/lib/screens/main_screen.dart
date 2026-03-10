@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/activity_screen.dart';
 import 'package:frontend/screens/add_expense_screen.dart';
+import 'package:frontend/screens/settings_screen.dart';
 import 'dashboard_screen.dart';
+import 'friends_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,13 +18,9 @@ class _MainScreenState extends State<MainScreen> {
   // Hier kommen später die anderen Screens rein
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const Center(
-      child: Text('Friends Screen', style: TextStyle(color: Colors.white)),
-    ), // Platzhalter
+    const FriendsScreen(), // Platzhalter
     const ActivityScreen(), // Platzhalter
-    const Center(
-      child: Text('Settings Screen', style: TextStyle(color: Colors.white)),
-    ), // Platzhalter
+    const SettingsScreen(),
   ];
 
   @override
