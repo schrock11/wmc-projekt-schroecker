@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import bcrypt from 'bcryptjs';
 import db from './database';
 
 const app = express();
@@ -8,25 +9,74 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
+const SALT_ROUNDS = 10;
+
 // ==========================================
 // 1. USERS ENDPUNKTE
 // ==========================================
 
-app.post('/api/users', (req: Request, res: Response) => {
-    const { username } = req.body;
+app.post('/api/users', async (req: Request, res: Response) => {
+    const { username, password } = req.body;
     
-    if (!username) {
-        res.status(400).json({ error: 'Username wird benötigt.' });
+    if (!username || !password) {
+        res.status(400).json({ error: 'Username und Passwort werden benötigt.' });
         return;
     }
 
-    db.run(`INSERT INTO Users (username) VALUES (?)`, [username], function(err) {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.status(201).json({ id: this.lastID, username });
-    });
+    if (String(password).length < 6) {
+        res.status(400).json({ error: 'Das Passwort muss mindestens 6 Zeichen haben.' });
+        return;
+    }
+
+    try {
+        const passwordHash = await bcrypt.hash(String(password), SALT_ROUNDS);
+
+        db.get(
+            `SELECT id, password_hash FROM Users WHERE username = ?`,
+            [username],
+            (lookupErr, existingUser: { id: number; password_hash: string | null } | undefined) => {
+                if (lookupErr) {
+                    res.status(500).json({ error: lookupErr.message });
+                    return;
+                }
+
+                // Legacy-User ohne Passwort können durch erneutes Register auf Passwort-Login migriert werden.
+                if (existingUser) {
+                    if (existingUser.password_hash) {
+                        res.status(409).json({ error: 'Username ist bereits vergeben.' });
+                        return;
+                    }
+
+                    db.run(
+                        `UPDATE Users SET password_hash = ? WHERE id = ?`,
+                        [passwordHash, existingUser.id],
+                        function(updateErr) {
+                            if (updateErr) {
+                                res.status(500).json({ error: updateErr.message });
+                                return;
+                            }
+                            res.status(200).json({ id: existingUser.id, username });
+                        }
+                    );
+                    return;
+                }
+
+                db.run(
+                    `INSERT INTO Users (username, password_hash) VALUES (?, ?)`,
+                    [username, passwordHash],
+                    function(insertErr) {
+                        if (insertErr) {
+                            res.status(500).json({ error: insertErr.message });
+                            return;
+                        }
+                        res.status(201).json({ id: this.lastID, username });
+                    }
+                );
+            }
+        );
+    } catch (error) {
+        res.status(500).json({ error: 'Passwort konnte nicht verarbeitet werden.' });
+    }
 });
 
 app.get('/api/users/:id', (req: Request, res: Response) => {
@@ -47,27 +97,36 @@ app.get('/api/users/:id', (req: Request, res: Response) => {
 // ==========================================
 // LOGIN ENDPUNKT
 // ==========================================
-app.post('/api/login', (req: Request, res: Response) => {
-    const { username } = req.body;
+app.post('/api/login', async (req: Request, res: Response) => {
+    const { username, password } = req.body;
 
-    if (!username) {
-        res.status(400).json({ error: 'Username wird benötigt.' });
+    if (!username || !password) {
+        res.status(400).json({ error: 'Username und Passwort werden benötigt.' });
         return;
     }
 
-    db.get(`SELECT id, username FROM Users WHERE username = ?`, [username], (err, row) => {
+    db.get(
+        `SELECT id, username, password_hash FROM Users WHERE username = ?`,
+        [username],
+        async (err, row: { id: number; username: string; password_hash: string | null } | undefined) => {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
         }
         if (!row) {
-            // 401 Unauthorized, wenn der Name nicht in der Datenbank steht
-            res.status(401).json({ error: 'User nicht gefunden. Bitte erst registrieren.' });
+            res.status(401).json({ error: 'Ungültige Zugangsdaten.' });
             return;
         }
-        
-        // User gefunden -> Daten zurückgeben
-        res.json(row);
+
+        const passwordHash = row.password_hash ?? '';
+        const isPasswordValid = await bcrypt.compare(String(password), passwordHash);
+
+        if (!isPasswordValid) {
+            res.status(401).json({ error: 'Ungültige Zugangsdaten.' });
+            return;
+        }
+
+        res.json({ id: row.id, username: row.username });
     });
 });
 

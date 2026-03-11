@@ -19,9 +19,9 @@ class SettingsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            Text('Settings', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+            Text('Einstellungen', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
             const SizedBox(height: 8),
-            const Text('Manage your account', style: TextStyle(color: Colors.grey)),
+            const Text('Dein Konto verwalten', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 32),
 
             // Account Info Card
@@ -36,7 +36,7 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   Text(userProvider.username ?? 'User', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
                   const SizedBox(height: 16),
-                  const Text('Your Buddy-ID', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  const Text('Deine Buddy-ID', style: TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -49,24 +49,24 @@ class SettingsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text('Share this ID with friends to connect', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  const Text('Teile diese ID mit Freunden zum Verbinden', style: TextStyle(color: Colors.grey, fontSize: 12)),
                 ],
               ),
             ),
             const SizedBox(height: 32),
 
-            Text('Theme', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+            Text('Design', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
             const SizedBox(height: 16),
             
             // Theme List
             Expanded(
               child: ListView(
                 children: [
-                  _buildThemeTile(context, 'Light', 'Clean and minimal', AppTheme.light, themeProvider),
-                  _buildThemeTile(context, 'Dark', 'Easy on the eyes', AppTheme.dark, themeProvider),
-                  _buildThemeTile(context, 'Matrix Green', 'Hacker style', AppTheme.matrix, themeProvider),
-                  _buildThemeTile(context, 'High-Contrast', 'Maximum readability', AppTheme.highContrast, themeProvider),
-                  _buildThemeTile(context, 'Ocean Blue', 'Deep sea vibes', AppTheme.ocean, themeProvider),
+                  _buildThemeTile(context, 'Hell', 'Klar und minimalistisch', AppTheme.light, themeProvider),
+                  _buildThemeTile(context, 'Dunkel', 'Augenschonend', AppTheme.dark, themeProvider),
+                  _buildThemeTile(context, 'Matrix Grün', 'Hacker-Stil', AppTheme.matrix, themeProvider),
+                  _buildThemeTile(context, 'Hoher Kontrast', 'Maximale Lesbarkeit', AppTheme.highContrast, themeProvider),
+                  _buildThemeTile(context, 'Ozean Blau', 'Tiefsee-Atmosphäre', AppTheme.ocean, themeProvider),
                 ],
               ),
             ),

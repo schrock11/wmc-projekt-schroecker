@@ -12,7 +12,8 @@ db.serialize(() => {
     db.run(`
         CREATE TABLE IF NOT EXISTS Users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL
         )
     `);
 
@@ -39,6 +40,25 @@ db.serialize(() => {
             FOREIGN KEY(debtor_id) REFERENCES Users(id)
         )
     `);
+
+    // Migriert bestehende Datenbanken, die noch keine Passwort-Spalte besitzen.
+    db.all(`PRAGMA table_info(Users)`, (err, columns: Array<{ name: string }>) => {
+        if (err) {
+            console.error('Fehler beim Lesen der Users-Tabellenstruktur:', err.message);
+            return;
+        }
+
+        const hasPasswordHash = columns.some((column) => column.name === 'password_hash');
+        if (!hasPasswordHash) {
+            db.run(`ALTER TABLE Users ADD COLUMN password_hash TEXT`, (alterErr) => {
+                if (alterErr) {
+                    console.error('Fehler bei der Migration von Users.password_hash:', alterErr.message);
+                    return;
+                }
+                console.log('Migration abgeschlossen: Users.password_hash wurde hinzugefügt.');
+            });
+        }
+    });
     
     console.log('Alle Datenbank-Tabellen wurden erfolgreich initialisiert.');
 });

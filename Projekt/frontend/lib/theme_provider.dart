@@ -33,29 +33,74 @@ class ThemeProvider with ChangeNotifier {
   ThemeData _buildTheme(AppTheme theme) {
     switch (theme) {
       case AppTheme.light:
+        const primary = Colors.blue;
+        const onPrimary = Colors.white;
         return ThemeData(
           brightness: Brightness.light,
           scaffoldBackgroundColor: Colors.white,
           cardColor: Colors.grey[200],
-          primaryColor: Colors.blue,
+          primaryColor: primary,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: primary,
+            brightness: Brightness.light,
+            primary: primary,
+            onPrimary: onPrimary,
+          ),
+          bottomAppBarTheme: const BottomAppBarThemeData(
+            color: Color(0xFFF1F5F9),
+          ),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: primary,
+            foregroundColor: onPrimary,
+          ),
           textTheme: const TextTheme(
             bodyLarge: TextStyle(color: Colors.black),
             bodyMedium: TextStyle(color: Colors.black87),
           ),
         );
       case AppTheme.dark:
+        const primary = Colors.blueAccent;
+        const onPrimary = Colors.white;
         return ThemeData(
           brightness: Brightness.dark,
           scaffoldBackgroundColor: const Color(0xFF0F172A),
           cardColor: const Color(0xFF1E293B),
-          primaryColor: Colors.blueAccent,
+          primaryColor: primary,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: primary,
+            brightness: Brightness.dark,
+            primary: primary,
+            onPrimary: onPrimary,
+          ),
+          bottomAppBarTheme: const BottomAppBarThemeData(
+            color: Color(0xFF1E293B),
+          ),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: primary,
+            foregroundColor: onPrimary,
+          ),
         );
       case AppTheme.matrix:
+        const primary = Colors.greenAccent;
+        const onPrimary = Colors.black;
         return ThemeData(
           brightness: Brightness.dark,
           scaffoldBackgroundColor: Colors.black,
           cardColor: const Color(0xFF001100),
-          primaryColor: Colors.greenAccent,
+          primaryColor: primary,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: primary,
+            brightness: Brightness.dark,
+            primary: primary,
+            onPrimary: onPrimary,
+          ),
+          bottomAppBarTheme: const BottomAppBarThemeData(
+            color: Color(0xFF001100),
+          ),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: primary,
+            foregroundColor: onPrimary,
+          ),
           textTheme: const TextTheme(
             bodyLarge: TextStyle(color: Colors.greenAccent),
             bodyMedium: TextStyle(color: Colors.greenAccent),
@@ -63,11 +108,24 @@ class ThemeProvider with ChangeNotifier {
           iconTheme: const IconThemeData(color: Colors.greenAccent),
         );
       case AppTheme.highContrast:
+        const primary = Colors.yellow;
+        const onPrimary = Colors.black;
         return ThemeData(
           brightness: Brightness.dark,
           scaffoldBackgroundColor: Colors.black,
           cardColor: Colors.grey[900],
-          primaryColor: Colors.yellow,
+          primaryColor: primary,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: primary,
+            brightness: Brightness.dark,
+            primary: primary,
+            onPrimary: onPrimary,
+          ),
+          bottomAppBarTheme: BottomAppBarThemeData(color: Colors.grey[900]),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: primary,
+            foregroundColor: onPrimary,
+          ),
           textTheme: const TextTheme(
             bodyLarge: TextStyle(color: Colors.yellow),
             bodyMedium: TextStyle(color: Colors.yellow),
@@ -75,11 +133,26 @@ class ThemeProvider with ChangeNotifier {
           iconTheme: const IconThemeData(color: Colors.yellow),
         );
       case AppTheme.ocean:
+        const primary = Colors.cyanAccent;
+        const onPrimary = Colors.black;
         return ThemeData(
           brightness: Brightness.dark,
           scaffoldBackgroundColor: const Color(0xFF003049),
           cardColor: const Color(0xFF005073),
-          primaryColor: Colors.cyanAccent,
+          primaryColor: primary,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: primary,
+            brightness: Brightness.dark,
+            primary: primary,
+            onPrimary: onPrimary,
+          ),
+          bottomAppBarTheme: const BottomAppBarThemeData(
+            color: Color(0xFF005073),
+          ),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: primary,
+            foregroundColor: onPrimary,
+          ),
         );
     }
   }

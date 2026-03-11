@@ -43,25 +43,26 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Future<void> _showAddFriendDialog() async {
     final TextEditingController idController = TextEditingController();
+    final theme = Theme.of(context);
+    final titleColor = theme.textTheme.bodyLarge?.color;
+    final mutedColor =
+        theme.textTheme.bodyMedium?.color?.withAlpha(170) ?? Colors.grey;
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          title: const Text(
-            'Add Friend',
-            style: TextStyle(color: Colors.white),
-          ),
+          backgroundColor: theme.cardColor,
+          title: Text('Freund hinzufügen', style: TextStyle(color: titleColor)),
           content: TextField(
             controller: idController,
             keyboardType: TextInputType.number,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: titleColor),
             decoration: InputDecoration(
-              hintText: 'Enter Buddy-ID',
-              hintStyle: const TextStyle(color: Colors.grey),
+              hintText: 'Buddy-ID eingeben',
+              hintStyle: TextStyle(color: mutedColor),
               filled: true,
-              fillColor: const Color(0xFF0F172A),
+              fillColor: theme.scaffoldBackgroundColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -71,7 +72,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child: Text('Abbrechen', style: TextStyle(color: mutedColor)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -82,9 +83,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
               ),
-              child: const Text('Add', style: TextStyle(color: Colors.white)),
+              child: const Text('Hinzufügen'),
             ),
           ],
         );
@@ -121,6 +123,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final titleColor = theme.textTheme.bodyLarge?.color;
+    final mutedColor =
+        theme.textTheme.bodyMedium?.color?.withAlpha(170) ?? Colors.grey;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -131,23 +138,23 @@ class _FriendsScreenState extends State<FriendsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Friends',
+                Text(
+                  'Freunde',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: titleColor,
                   ),
                 ),
                 Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF1E293B),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.person_add,
-                      color: Colors.blueAccent,
+                      color: theme.colorScheme.primary,
                     ),
                     onPressed: _showAddFriendDialog,
                   ),
@@ -159,10 +166,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : friends.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
-                        'No friends added yet.',
-                        style: TextStyle(color: Colors.grey),
+                        'Noch keine Freunde hinzugefügt.',
+                        style: TextStyle(color: mutedColor),
                       ),
                     )
                   : ListView.builder(
@@ -173,17 +180,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           margin: const EdgeInsets.only(bottom: 16),
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: theme.cardColor,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
                             children: [
                               CircleAvatar(
-                                backgroundColor: Colors.blueAccent,
+                                backgroundColor: theme.colorScheme.primary,
                                 child: Text(
                                   friend['username'][0].toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onPrimary,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -194,8 +201,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                 children: [
                                   Text(
                                     friend['username'],
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: titleColor,
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -203,8 +210,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     'Buddy-ID: ${friend['id']}',
-                                    style: const TextStyle(
-                                      color: Colors.grey,
+                                    style: TextStyle(
+                                      color: mutedColor,
                                       fontSize: 12,
                                     ),
                                   ),

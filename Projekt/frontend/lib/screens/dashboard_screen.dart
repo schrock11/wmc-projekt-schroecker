@@ -34,7 +34,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     try {
       // 1. Freunde laden, um IDs in Namen umzuwandeln
-      final friendsUrl = Uri.parse('http://10.0.2.2:3000/api/users/$userId/friends');
+      final friendsUrl = Uri.parse(
+        'http://10.0.2.2:3000/api/users/$userId/friends',
+      );
       final friendsRes = await http.get(friendsUrl);
       if (friendsRes.statusCode == 200) {
         final List<dynamic> friendsList = json.decode(friendsRes.body);
@@ -44,7 +46,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
 
       // 2. Transaktionen laden
-      final transUrl = Uri.parse('http://10.0.2.2:3000/api/users/$userId/transactions');
+      final transUrl = Uri.parse(
+        'http://10.0.2.2:3000/api/users/$userId/transactions',
+      );
       final transRes = await http.get(transUrl);
 
       if (transRes.statusCode == 200) {
@@ -74,17 +78,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Top Freunde aggregieren
         List<Map<String, dynamic>> calculatedTopFriends = [];
         balances.forEach((id, balance) {
-          if (balance != 0) { // Nur eintragen, wenn es offene Schulden gibt
+          if (balance != 0) {
+            // Nur eintragen, wenn es offene Schulden gibt
             calculatedTopFriends.add({
               'id': id,
               'name': friendNames[id] ?? 'Buddy ID $id',
-              'balance': balance, // Positiv: Freund schuldet dir, Negativ: Du schuldest dem Freund
+              'balance':
+                  balance, // Positiv: Freund schuldet dir, Negativ: Du schuldest dem Freund
             });
           }
         });
 
         // Nach höchstem Betrag (absolut) absteigend sortieren
-        calculatedTopFriends.sort((a, b) => (b['balance'] as double).abs().compareTo((a['balance'] as double).abs()));
+        calculatedTopFriends.sort(
+          (a, b) => (b['balance'] as double).abs().compareTo(
+            (a['balance'] as double).abs(),
+          ),
+        );
 
         // Auf maximal 3 limitieren
         if (calculatedTopFriends.length > 3) {
@@ -119,7 +129,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final username = Provider.of<UserProvider>(context).username ?? 'User';
     final totalBalance = totalCredit - totalOwed;
-    
+    final theme = Theme.of(context);
+    final titleColor = theme.textTheme.bodyLarge?.color;
+    final mutedColor =
+        theme.textTheme.bodyMedium?.color?.withAlpha(170) ?? Colors.grey;
+    final accentColor = theme.colorScheme.primary;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -128,11 +143,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             const SizedBox(height: 20),
             Text(
-              'Welcome, $username',
-              style: const TextStyle(
+              'Willkommen, $username',
+              style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: titleColor,
               ),
             ),
             const SizedBox(height: 30),
@@ -144,14 +159,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Column(
                   children: [
-                    const Text(
-                      'Total Balance',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    Text(
+                      'Gesamtsaldo',
+                      style: TextStyle(color: mutedColor, fontSize: 14),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -166,7 +181,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      totalBalance < 0 ? '↘ You owe' : '↗ They owe you',
+                      totalBalance < 0 ? '↘ Du schuldest' : '↗ Dir wird geschuldet',
                       style: TextStyle(
                         color: totalBalance < 0
                             ? Colors.redAccent
@@ -180,9 +195,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Column(
                           children: [
-                            const Text(
-                              'Total Owed',
-                              style: TextStyle(color: Colors.grey),
+                            Text(
+                              'Schulden gesamt',
+                              style: TextStyle(color: mutedColor),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -197,9 +212,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         Column(
                           children: [
-                            const Text(
-                              'Total Credit',
-                              style: TextStyle(color: Colors.grey),
+                            Text(
+                              'Guthaben gesamt',
+                              style: TextStyle(color: mutedColor),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -222,16 +237,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Top Friends Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 Text(
-                  'Top Friends',
+                  'Top Freunde',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: titleColor,
                   ),
                 ),
-                Icon(Icons.trending_up, color: Colors.grey),
+                Icon(Icons.trending_up, color: mutedColor),
               ],
             ),
             const SizedBox(height: 16),
@@ -241,34 +256,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : topFriends.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No open balances with friends.',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: topFriends.length,
-                          itemBuilder: (context, index) {
-                            final friend = topFriends[index];
-                            final double balance = friend['balance'];
-                            final bool isIOwe = balance < 0;
-                            final displayAmount = balance.abs();
-                            final initials = _getInitials(friend['name']);
+                  ? Center(
+                      child: Text(
+                        'Keine offenen Salden mit Freunden.',
+                        style: TextStyle(color: mutedColor),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: topFriends.length,
+                      itemBuilder: (context, index) {
+                        final friend = topFriends[index];
+                        final double balance = friend['balance'];
+                        final bool isIOwe = balance < 0;
+                        final displayAmount = balance.abs();
+                        final initials = _getInitials(friend['name']);
 
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: _buildFriendTile(
-                                initials,
-                                friend['name'],
-                                friend['id'].toString(),
-                                '${isIOwe ? '-' : '+'}\$${displayAmount.toStringAsFixed(2)}',
-                                isIOwe ? 'you owe' : 'owes you',
-                                isIOwe ? Colors.redAccent : Colors.greenAccent,
-                              ),
-                            );
-                          },
-                        ),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: _buildFriendTile(
+                            initials,
+                            friend['name'],
+                            friend['id'].toString(),
+                            '${isIOwe ? '-' : '+'}\$${displayAmount.toStringAsFixed(2)}',
+                            isIOwe ? 'du schuldest' : 'schuldet dir',
+                            isIOwe ? Colors.redAccent : Colors.greenAccent,
+                            theme,
+                            accentColor,
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -284,21 +301,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String amount,
     String subText,
     Color amountColor,
+    ThemeData theme,
+    Color accentColor,
   ) {
+    final titleColor = theme.textTheme.bodyLarge?.color;
+    final mutedColor =
+        theme.textTheme.bodyMedium?.color?.withAlpha(170) ?? Colors.grey;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: accentColor,
             child: Text(
               initials,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: theme.colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -310,16 +333,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: titleColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
-                Text(
-                  id,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
+                Text(id, style: TextStyle(color: mutedColor, fontSize: 12)),
               ],
             ),
           ),
@@ -334,10 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   fontSize: 16,
                 ),
               ),
-              Text(
-                subText,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
-              ),
+              Text(subText, style: TextStyle(color: mutedColor, fontSize: 12)),
             ],
           ),
         ],

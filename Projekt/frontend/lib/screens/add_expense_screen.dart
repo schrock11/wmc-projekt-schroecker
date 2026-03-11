@@ -15,7 +15,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   bool isIOwe = true; // true = Ich schulde, false = Mir wird geschuldet
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
-  
+
   List<dynamic> friends = [];
   int? selectedFriendId;
   bool isLoadingFriends = true;
@@ -50,16 +50,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   Future<void> _submitTransaction() async {
     final amountText = _amountController.text.replaceAll(',', '.');
     final amount = double.tryParse(amountText);
-    
+
     if (amount == null || amount <= 0 || selectedFriendId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid amount and select a friend.')),
+        const SnackBar(
+          content: Text('Bitte einen gültigen Betrag eingeben und einen Freund auswählen.'),
+        ),
       );
       return;
     }
 
     final myId = Provider.of<UserProvider>(context, listen: false).userId;
-    
+
     // Logik: Wer ist Payer (zahlt) und wer ist Debtor (schuldet)?
     final payerId = isIOwe ? selectedFriendId : myId;
     final debtorId = isIOwe ? myId : selectedFriendId;
@@ -73,42 +75,59 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           'payer_id': payerId,
           'debtor_id': debtorId,
           'amount': amount,
-          'description': _descController.text.isEmpty ? 'No description' : _descController.text,
+          'description': _descController.text.isEmpty
+              ? 'Keine Beschreibung'
+              : _descController.text,
         }),
       );
 
       if (response.statusCode == 201) {
         if (mounted) {
-          Navigator.pop(context, true); // Schließt den Screen und gibt "true" zurück (für den Refresh)
+          Navigator.pop(
+            context,
+            true,
+          ); // Schließt den Screen und gibt "true" zurück (für den Refresh)
         }
       } else {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Fehler: ${response.body}')));
         }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to connect: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+          ).showSnackBar(SnackBar(content: Text('Verbindung fehlgeschlagen: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final titleColor = theme.textTheme.bodyLarge?.color;
+    final mutedColor =
+        theme.textTheme.bodyMedium?.color?.withAlpha(170) ?? Colors.grey;
     final activeColor = isIOwe ? Colors.redAccent : Colors.greenAccent;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Add Expense', style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text('Ausgabe hinzufügen', style: TextStyle(color: titleColor)),
+        iconTheme: IconThemeData(color: titleColor),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Transaction type', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(
+              'Transaktionstyp',
+              style: TextStyle(color: mutedColor, fontSize: 12),
+            ),
             const SizedBox(height: 8),
             // Toggle Buttons (I owe / They owe me)
             Row(
@@ -119,12 +138,21 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: isIOwe ? Colors.redAccent : Colors.transparent, width: 2),
+                        border: Border.all(
+                          color: isIOwe ? Colors.redAccent : Colors.transparent,
+                          width: 2,
+                        ),
                       ),
                       child: const Center(
-                        child: Text('↘ I owe', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          '↘ Ich schulde',
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -136,12 +164,23 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: !isIOwe ? Colors.greenAccent : Colors.transparent, width: 2),
+                        border: Border.all(
+                          color: !isIOwe
+                              ? Colors.greenAccent
+                              : Colors.transparent,
+                          width: 2,
+                        ),
                       ),
                       child: const Center(
-                        child: Text('↗ They owe me', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          '↗ Mir wird geschuldet',
+                          style: TextStyle(
+                            color: Colors.greenAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -150,64 +189,88 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
             const SizedBox(height: 24),
 
-            const Text('Amount', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            Text('Betrag', style: TextStyle(color: mutedColor, fontSize: 12)),
             const SizedBox(height: 8),
             TextField(
               controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              style: TextStyle(
+                color: titleColor,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: InputDecoration(
                 prefixText: '€ ',
-                prefixStyle: const TextStyle(color: Colors.white, fontSize: 24),
+                prefixStyle: TextStyle(color: titleColor, fontSize: 24),
                 filled: true,
-                fillColor: const Color(0xFF1E293B),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                fillColor: theme.cardColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 24),
 
-            const Text('Description', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(
+              'Beschreibung',
+              style: TextStyle(color: mutedColor, fontSize: 12),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _descController,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: titleColor),
               decoration: InputDecoration(
-                hintText: "What's this for?",
-                hintStyle: const TextStyle(color: Colors.grey),
+                hintText: 'Wofür ist das?',
+                hintStyle: TextStyle(color: mutedColor),
                 filled: true,
-                fillColor: const Color(0xFF1E293B),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                fillColor: theme.cardColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 24),
 
-            const Text('Select friend', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(
+              'Freund auswählen',
+              style: TextStyle(color: mutedColor, fontSize: 12),
+            ),
             const SizedBox(height: 8),
-            isLoadingFriends 
-              ? const Center(child: CircularProgressIndicator())
-              : DropdownButtonFormField<int>(
-                  dropdownColor: const Color(0xFF1E293B),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFF1E293B),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            isLoadingFriends
+                ? const Center(child: CircularProgressIndicator())
+                : DropdownButtonFormField<int>(
+                    dropdownColor: theme.cardColor,
+                    style: TextStyle(color: titleColor),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: theme.cardColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    value: selectedFriendId,
+                    hint: Text(
+                      'Freund auswählen...',
+                      style: TextStyle(color: mutedColor),
+                    ),
+                    items: friends.map<DropdownMenuItem<int>>((friend) {
+                      return DropdownMenuItem<int>(
+                        value: friend['id'],
+                        child: Text(friend['username']),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedFriendId = value;
+                      });
+                    },
                   ),
-                  value: selectedFriendId,
-                  hint: const Text('Select a friend...', style: TextStyle(color: Colors.grey)),
-                  items: friends.map<DropdownMenuItem<int>>((friend) {
-                    return DropdownMenuItem<int>(
-                      value: friend['id'],
-                      child: Text(friend['username']),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedFriendId = value;
-                    });
-                  },
-                ),
-            
+
             const Spacer(),
 
             // Submit Button
@@ -216,11 +279,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: activeColor,
                 minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(
-                'Add Debt',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                'Schuld hinzufügen',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onPrimary,
+                ),
               ),
             ),
           ],

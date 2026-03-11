@@ -5,6 +5,8 @@ import 'package:frontend/screens/main_screen.dart';
 import 'package:frontend/user_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +20,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  final LocalAuthentication auth = LocalAuthentication();
+  bool _hasSavedUser = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSavedUser();
+  }
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -25,11 +36,131 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _checkSavedUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _hasSavedUser = prefs.containsKey('saved_username') &&
+          prefs.containsKey('saved_password');
+    });
+  }
+
+  Future<void> _authenticateBiometric() async {
+    try {
+      final bool canAuthenticate =
+          await auth.canCheckBiometrics || await auth.isDeviceSupported();
+      if (!canAuthenticate) return;
+
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: 'App-Zugriff per Fingerabdruck oder Gesichtserkennung',
+      );
+
+      if (didAuthenticate) {
+        final prefs = await SharedPreferences.getInstance();
+        final savedUsername = prefs.getString('saved_username');
+        final savedPassword = prefs.getString('saved_password');
+
+        if (savedUsername != null && savedPassword != null) {
+          _processAuth(savedUsername, savedPassword, true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Biometrie-Fehler: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _processAuth(
+      String username, String password, bool isLoginRequest) async {
+    if (username.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bitte Benutzername und Passwort eingeben'),
+        ),
+      );
+      return;
+    }
+
+    if (!isLoginRequest && password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Das Passwort muss mindestens 6 Zeichen lang sein'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final url = Uri.parse(
+        isLoginRequest
+            ? 'http://10.0.2.2:3000/api/login'
+            : 'http://10.0.2.2:3000/api/users',
+      );
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'username': username,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        // Zugangsdaten speichern für späteren biometrischen Login
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('saved_username', username);
+        await prefs.setString('saved_password', password);
+
+        if (mounted) {
+          Provider.of<UserProvider>(
+            context,
+            listen: false,
+          ).setUser(data['id'], data['username']);
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MainScreen(),
+            ),
+          );
+        }
+      } else {
+        String message = isLoginRequest
+            ? 'Anmeldung fehlgeschlagen. Ungültige Zugangsdaten.'
+            : 'Registrierung fehlgeschlagen. Bitte erneut versuchen.';
+        try {
+          final data = json.decode(response.body);
+          message = data['error']?.toString() ?? message;
+        } catch (_) {}
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Dunkles Theme passend zum Mockup
+    final theme = Theme.of(context);
+    final titleColor = theme.textTheme.bodyLarge?.color;
+    final mutedColor =
+        theme.textTheme.bodyMedium?.color?.withAlpha(170) ?? Colors.grey;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Dunkles Blau/Grau
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -38,20 +169,20 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Logo & Titel
-              const Text(
+              Text(
                 'DebtBuddy',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: titleColor,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Track shared expenses with friends',
+              Text(
+                'Gemeinsame Ausgaben mit Freunden verwalten',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 14, color: mutedColor),
               ),
               const SizedBox(height: 40),
 
@@ -59,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
@@ -75,15 +206,15 @@ class _LoginScreenState extends State<LoginScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: isLogin
-                                    ? const Color(0xFF0F172A)
+                                    ? theme.scaffoldBackgroundColor
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Center(
                                 child: Text(
-                                  'Login',
+                                  'Anmelden',
                                   style: TextStyle(
-                                    color: isLogin ? Colors.white : Colors.grey,
+                                    color: isLogin ? titleColor : mutedColor,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -98,17 +229,15 @@ class _LoginScreenState extends State<LoginScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: !isLogin
-                                    ? const Color(0xFF0F172A)
+                                    ? theme.scaffoldBackgroundColor
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Center(
                                 child: Text(
-                                  'Register',
+                                  'Registrieren',
                                   style: TextStyle(
-                                    color: !isLogin
-                                        ? Colors.white
-                                        : Colors.grey,
+                                    color: !isLogin ? titleColor : mutedColor,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -121,23 +250,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
 
                     // Username Eingabefeld
-                    const Text(
-                      'Username',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    Text(
+                      'Benutzername',
+                      style: TextStyle(color: mutedColor, fontSize: 12),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _usernameController,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: titleColor),
                       decoration: InputDecoration(
-                        hintText: 'Enter your username',
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        prefixIcon: const Icon(
+                        hintText: 'Benutzername eingeben',
+                        hintStyle: TextStyle(color: mutedColor),
+                        prefixIcon: Icon(
                           Icons.person_outline,
-                          color: Colors.grey,
+                          color: mutedColor,
                         ),
                         filled: true,
-                        fillColor: const Color(0xFF0F172A),
+                        fillColor: theme.scaffoldBackgroundColor,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -147,24 +276,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
 
                     // Password Eingabefeld
-                    const Text(
-                      'Password',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    Text(
+                      'Passwort',
+                      style: TextStyle(color: mutedColor, fontSize: 12),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _passwordController,
                       obscureText: true,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: titleColor),
                       decoration: InputDecoration(
-                        hintText: 'Enter your password',
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        prefixIcon: const Icon(
-                          Icons.lock_outline,
-                          color: Colors.grey,
-                        ),
+                        hintText: 'Passwort eingeben',
+                        hintStyle: TextStyle(color: mutedColor),
+                        prefixIcon: Icon(Icons.lock_outline, color: mutedColor),
                         filled: true,
-                        fillColor: const Color(0xFF0F172A),
+                        fillColor: theme.scaffoldBackgroundColor,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -174,120 +300,43 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
 
                     // Submit Button
-                    // Submit Button
                     ElevatedButton(
-                      onPressed: () async {
-                        final username = _usernameController.text.trim();
-                        if (username.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please enter a username'),
-                            ),
-                          );
-                          return;
-                        }
-
-                        try {
-                          if (!isLogin) {
-                            // =======================
-                            // REGISTER REQUEST
-                            // =======================
-                            final url = Uri.parse(
-                              'http://locahlhost/api/users',
-                            );
-                            final response = await http.post(
-                              url,
-                              headers: {'Content-Type': 'application/json'},
-                              body: json.encode({'username': username}),
-                            );
-
-                            if (response.statusCode == 201) {
-                              final data = json.decode(response.body);
-                              if (mounted) {
-                                Provider.of<UserProvider>(
-                                  context,
-                                  listen: false,
-                                ).setUser(data['id'], data['username']);
-
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MainScreen(),
-                                  ),
-                                );
-                              }
-                            } else {
-                              if (mounted)
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Registration failed: ${response.body}',
-                                    ),
-                                  ),
-                                );
-                            }
-                          } else {
-                            // =======================
-                            // LOGIN REQUEST
-                            // =======================
-                            final url = Uri.parse(
-                              'http://10.0.2.2:3000/api/login',
-                            );
-                            final response = await http.post(
-                              url,
-                              headers: {'Content-Type': 'application/json'},
-                              body: json.encode({'username': username}),
-                            );
-
-                            if (response.statusCode == 200) {
-                              final data = json.decode(response.body);
-                              if (mounted) {
-                                Provider.of<UserProvider>(
-                                  context,
-                                  listen: false,
-                                ).setUser(data['id'], data['username']);
-
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MainScreen(),
-                                  ),
-                                );
-                              }
-                            } else {
-                              if (mounted)
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Login failed: User not found!',
-                                    ),
-                                  ),
-                                );
-                            }
-                          }
-                        } catch (e) {
-                          if (mounted)
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e')),
-                            );
-                        }
-                      },
+                      onPressed: () => _processAuth(
+                        _usernameController.text.trim(),
+                        _passwordController.text,
+                        isLogin,
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: Text(
-                        isLogin ? 'Login' : 'Create Account',
+                        isLogin ? 'Anmelden' : 'Konto erstellen',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
                         ),
                       ),
                     ),
+                    
+                    // Biometrie Button (wird nur angezeigt, wenn Daten gespeichert sind)
+                    if (_hasSavedUser) ...[
+                      const SizedBox(height: 24),
+                      Center(
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.fingerprint,
+                            size: 50,
+                            color: theme.colorScheme.primary,
+                          ),
+                          onPressed: _authenticateBiometric,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

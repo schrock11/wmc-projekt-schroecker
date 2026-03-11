@@ -25,8 +25,10 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: _screens[_currentIndex],
 
       // Schwebender + Button in der Mitte
@@ -46,15 +48,20 @@ class _MainScreenState extends State<MainScreen> {
             });
           }
         },
-        backgroundColor: Colors.blueAccent,
+        backgroundColor:
+            theme.floatingActionButtonTheme.backgroundColor ??
+            theme.colorScheme.primary,
+        foregroundColor:
+            theme.floatingActionButtonTheme.foregroundColor ??
+            theme.colorScheme.onPrimary,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 30),
+        child: const Icon(Icons.add, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
       // Navigationsleiste unten
       bottomNavigationBar: BottomAppBar(
-        color: const Color(0xFF1E293B),
+        color: theme.bottomAppBarTheme.color ?? theme.cardColor,
         shape: const CircularNotchedRectangle(),
         notchMargin: 8.0,
         child: SizedBox(
@@ -62,11 +69,11 @@ class _MainScreenState extends State<MainScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home_outlined, 'Home', 0),
-              _buildNavItem(Icons.people_outline, 'Friends', 1),
+              _buildNavItem(Icons.home_outlined, 'Start', 0),
+              _buildNavItem(Icons.people_outline, 'Freunde', 1),
               const SizedBox(width: 48), // Platz für den Floating Action Button
-              _buildNavItem(Icons.receipt_long_outlined, 'Activity', 2),
-              _buildNavItem(Icons.settings_outlined, 'Settings', 3),
+              _buildNavItem(Icons.receipt_long_outlined, 'Aktivität', 2),
+              _buildNavItem(Icons.settings_outlined, 'Einstellungen', 3),
             ],
           ),
         ),
@@ -76,17 +83,22 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
+    final theme = Theme.of(context);
+    final selectedColor = theme.colorScheme.primary;
+    final unselectedColor =
+        theme.textTheme.bodyMedium?.color?.withAlpha(166) ?? Colors.grey;
+
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: isSelected ? Colors.blueAccent : Colors.grey),
+          Icon(icon, color: isSelected ? selectedColor : unselectedColor),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.blueAccent : Colors.grey,
+              color: isSelected ? selectedColor : unselectedColor,
               fontSize: 10,
             ),
           ),
