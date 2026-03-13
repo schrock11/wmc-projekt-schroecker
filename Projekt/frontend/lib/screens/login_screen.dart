@@ -39,7 +39,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _checkSavedUser() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _hasSavedUser = prefs.containsKey('saved_username') &&
+      _hasSavedUser =
+          prefs.containsKey('saved_username') &&
           prefs.containsKey('saved_password');
     });
   }
@@ -65,15 +66,18 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Biometrie-Fehler: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Biometrie-Fehler: $e')));
       }
     }
   }
 
   Future<void> _processAuth(
-      String username, String password, bool isLoginRequest) async {
+    String username,
+    String password,
+    bool isLoginRequest,
+  ) async {
     if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -101,10 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'username': username,
-          'password': password,
-        }),
+        body: json.encode({'username': username, 'password': password}),
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -123,9 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (context) => const MainScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         }
       } else {
@@ -138,16 +137,16 @@ class _LoginScreenState extends State<LoginScreen> {
         } catch (_) {}
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Fehler: $e')));
       }
     }
   }
@@ -162,185 +161,194 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Logo & Titel
-              Text(
-                'DebtBuddy',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: titleColor,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Logo & Titel
+                Text(
+                  'DebtBuddy',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: titleColor,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Gemeinsame Ausgaben mit Freunden verwalten',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: mutedColor),
-              ),
-              const SizedBox(height: 40),
+                const SizedBox(height: 8),
+                Text(
+                  'Gemeinsame Ausgaben mit Freunden verwalten',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: mutedColor),
+                ),
+                const SizedBox(height: 40),
 
-              // Login / Register Toggle Card
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Toggle Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => isLogin = true),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: isLogin
-                                    ? theme.scaffoldBackgroundColor
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Anmelden',
-                                  style: TextStyle(
-                                    color: isLogin ? titleColor : mutedColor,
-                                    fontWeight: FontWeight.bold,
+                // Login / Register Toggle Card
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Toggle Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => isLogin = true),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isLogin
+                                      ? theme.scaffoldBackgroundColor
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Anmelden',
+                                    style: TextStyle(
+                                      color: isLogin ? titleColor : mutedColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => isLogin = false),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: !isLogin
-                                    ? theme.scaffoldBackgroundColor
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Registrieren',
-                                  style: TextStyle(
-                                    color: !isLogin ? titleColor : mutedColor,
-                                    fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => isLogin = false),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: !isLogin
+                                      ? theme.scaffoldBackgroundColor
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Registrieren',
+                                    style: TextStyle(
+                                      color: !isLogin ? titleColor : mutedColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Username Eingabefeld
+                      Text(
+                        'Benutzername',
+                        style: TextStyle(color: mutedColor, fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _usernameController,
+                        style: TextStyle(color: titleColor),
+                        decoration: InputDecoration(
+                          hintText: 'Benutzername eingeben',
+                          hintStyle: TextStyle(color: mutedColor),
+                          prefixIcon: Icon(
+                            Icons.person_outline,
+                            color: mutedColor,
+                          ),
+                          filled: true,
+                          fillColor: theme.scaffoldBackgroundColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Password Eingabefeld
+                      Text(
+                        'Passwort',
+                        style: TextStyle(color: mutedColor, fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        style: TextStyle(color: titleColor),
+                        decoration: InputDecoration(
+                          hintText: 'Passwort eingeben',
+                          hintStyle: TextStyle(color: mutedColor),
+                          prefixIcon: Icon(
+                            Icons.lock_outline,
+                            color: mutedColor,
+                          ),
+                          filled: true,
+                          fillColor: theme.scaffoldBackgroundColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Submit Button
+                      ElevatedButton(
+                        onPressed: () => _processAuth(
+                          _usernameController.text.trim(),
+                          _passwordController.text,
+                          isLogin,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          isLogin ? 'Anmelden' : 'Konto erstellen',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
+                      // Biometrie Button (wird nur beim Login angezeigt, wenn Daten gespeichert sind)
+                      if (isLogin && _hasSavedUser) ...[
+                        const SizedBox(height: 24),
+                        Center(
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.fingerprint,
+                              size: 50,
+                              color: theme.colorScheme.primary,
+                            ),
+                            onPressed: _authenticateBiometric,
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Username Eingabefeld
-                    Text(
-                      'Benutzername',
-                      style: TextStyle(color: mutedColor, fontSize: 12),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _usernameController,
-                      style: TextStyle(color: titleColor),
-                      decoration: InputDecoration(
-                        hintText: 'Benutzername eingeben',
-                        hintStyle: TextStyle(color: mutedColor),
-                        prefixIcon: Icon(
-                          Icons.person_outline,
-                          color: mutedColor,
-                        ),
-                        filled: true,
-                        fillColor: theme.scaffoldBackgroundColor,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Password Eingabefeld
-                    Text(
-                      'Passwort',
-                      style: TextStyle(color: mutedColor, fontSize: 12),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      style: TextStyle(color: titleColor),
-                      decoration: InputDecoration(
-                        hintText: 'Passwort eingeben',
-                        hintStyle: TextStyle(color: mutedColor),
-                        prefixIcon: Icon(Icons.lock_outline, color: mutedColor),
-                        filled: true,
-                        fillColor: theme.scaffoldBackgroundColor,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Submit Button
-                    ElevatedButton(
-                      onPressed: () => _processAuth(
-                        _usernameController.text.trim(),
-                        _passwordController.text,
-                        isLogin,
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        isLogin ? 'Anmelden' : 'Konto erstellen',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    
-                    // Biometrie Button (wird nur angezeigt, wenn Daten gespeichert sind)
-                    if (_hasSavedUser) ...[
-                      const SizedBox(height: 24),
-                      Center(
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.fingerprint,
-                            size: 50,
-                            color: theme.colorScheme.primary,
-                          ),
-                          onPressed: _authenticateBiometric,
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -143,17 +143,58 @@ app.post('/api/friendships', (req: Request, res: Response) => {
         return;
     }
 
-    db.run(
-        `INSERT INTO Friendships (user_id, friend_id) VALUES (?, ?)`, 
-        [user_id, friend_id], 
-        function(err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
+    if (Number(user_id) === Number(friend_id)) {
+        res.status(400).json({ error: 'Du kannst dich nicht selbst als Freund hinzufügen.' });
+        return;
+    }
+
+    db.get(`SELECT id FROM Users WHERE id = ?`, [user_id], (userErr, userRow) => {
+        if (userErr) {
+            res.status(500).json({ error: userErr.message });
+            return;
+        }
+
+        if (!userRow) {
+            res.status(404).json({ error: 'User nicht gefunden.' });
+            return;
+        }
+
+        db.get(`SELECT id FROM Users WHERE id = ?`, [friend_id], (friendErr, friendRow) => {
+            if (friendErr) {
+                res.status(500).json({ error: friendErr.message });
                 return;
             }
-            res.status(201).json({ message: 'Freund erfolgreich hinzugefügt!' });
-        }
-    );
+
+            if (!friendRow) {
+                res.status(404).json({ error: 'Freund mit dieser Buddy-ID wurde nicht gefunden.' });
+                return;
+            }
+
+            db.run(
+                `INSERT OR IGNORE INTO Friendships (user_id, friend_id) VALUES (?, ?)`,
+                [user_id, friend_id],
+                function(insertErr) {
+                    if (insertErr) {
+                        res.status(500).json({ error: insertErr.message });
+                        return;
+                    }
+
+                    db.run(
+                        `INSERT OR IGNORE INTO Friendships (user_id, friend_id) VALUES (?, ?)`,
+                        [friend_id, user_id],
+                        function(reverseInsertErr) {
+                            if (reverseInsertErr) {
+                                res.status(500).json({ error: reverseInsertErr.message });
+                                return;
+                            }
+
+                            res.status(201).json({ message: 'Freundschaft beidseitig gespeichert.' });
+                        }
+                    );
+                }
+            );
+        });
+    });
 });
 
 app.get('/api/users/:id/friends', (req: Request, res: Response) => {

@@ -119,180 +119,184 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         title: Text('Ausgabe hinzufügen', style: TextStyle(color: titleColor)),
         iconTheme: IconThemeData(color: titleColor),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Transaktionstyp',
-              style: TextStyle(color: mutedColor, fontSize: 12),
-            ),
-            const SizedBox(height: 8),
-            // Toggle Buttons (I owe / They owe me)
-            Row(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => isIOwe = true),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: theme.cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isIOwe ? Colors.redAccent : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          '↘ Ich schulde',
-                          style: TextStyle(
-                            color: Colors.redAccent,
-                            fontWeight: FontWeight.bold,
+                Text(
+                  'Transaktionstyp',
+                  style: TextStyle(color: mutedColor, fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                // Toggle Buttons (I owe / They owe me)
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => isIOwe = true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isIOwe ? Colors.redAccent : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '↘ Ich schulde',
+                              style: TextStyle(
+                                color: Colors.redAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => isIOwe = false),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: theme.cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: !isIOwe
-                              ? Colors.greenAccent
-                              : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          '↗ Mir wird geschuldet',
-                          style: TextStyle(
-                            color: Colors.greenAccent,
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => isIOwe = false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: !isIOwe
+                                  ? Colors.greenAccent
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '↗ Mir wird geschuldet',
+                              style: TextStyle(
+                                color: Colors.greenAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+          
+                Text('Betrag', style: TextStyle(color: mutedColor, fontSize: 12)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _amountController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    prefixText: '€ ',
+                    prefixStyle: TextStyle(color: titleColor, fontSize: 24),
+                    filled: true,
+                    fillColor: theme.cardColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+          
+                Text(
+                  'Beschreibung',
+                  style: TextStyle(color: mutedColor, fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _descController,
+                  style: TextStyle(color: titleColor),
+                  decoration: InputDecoration(
+                    hintText: 'Wofür ist das?',
+                    hintStyle: TextStyle(color: mutedColor),
+                    filled: true,
+                    fillColor: theme.cardColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+          
+                Text(
+                  'Freund auswählen',
+                  style: TextStyle(color: mutedColor, fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                isLoadingFriends
+                    ? const Center(child: CircularProgressIndicator())
+                    : DropdownButtonFormField<int>(
+                        dropdownColor: theme.cardColor,
+                        style: TextStyle(color: titleColor),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: theme.cardColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        value: selectedFriendId,
+                        hint: Text(
+                          'Freund auswählen...',
+                          style: TextStyle(color: mutedColor),
+                        ),
+                        items: friends.map<DropdownMenuItem<int>>((friend) {
+                          return DropdownMenuItem<int>(
+                            value: friend['id'],
+                            child: Text(friend['username']),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedFriendId = value;
+                          });
+                        },
+                      ),
+          
+                const SizedBox(height: 40),
+          
+                // Submit Button
+                ElevatedButton(
+                  onPressed: _submitTransaction,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: activeColor,
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Schuld hinzufügen',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-
-            Text('Betrag', style: TextStyle(color: mutedColor, fontSize: 12)),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              style: TextStyle(
-                color: titleColor,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-              decoration: InputDecoration(
-                prefixText: '€ ',
-                prefixStyle: TextStyle(color: titleColor, fontSize: 24),
-                filled: true,
-                fillColor: theme.cardColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            Text(
-              'Beschreibung',
-              style: TextStyle(color: mutedColor, fontSize: 12),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _descController,
-              style: TextStyle(color: titleColor),
-              decoration: InputDecoration(
-                hintText: 'Wofür ist das?',
-                hintStyle: TextStyle(color: mutedColor),
-                filled: true,
-                fillColor: theme.cardColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            Text(
-              'Freund auswählen',
-              style: TextStyle(color: mutedColor, fontSize: 12),
-            ),
-            const SizedBox(height: 8),
-            isLoadingFriends
-                ? const Center(child: CircularProgressIndicator())
-                : DropdownButtonFormField<int>(
-                    dropdownColor: theme.cardColor,
-                    style: TextStyle(color: titleColor),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: theme.cardColor,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    value: selectedFriendId,
-                    hint: Text(
-                      'Freund auswählen...',
-                      style: TextStyle(color: mutedColor),
-                    ),
-                    items: friends.map<DropdownMenuItem<int>>((friend) {
-                      return DropdownMenuItem<int>(
-                        value: friend['id'],
-                        child: Text(friend['username']),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedFriendId = value;
-                      });
-                    },
-                  ),
-
-            const Spacer(),
-
-            // Submit Button
-            ElevatedButton(
-              onPressed: _submitTransaction,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: activeColor,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Schuld hinzufügen',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onPrimary,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
